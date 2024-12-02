@@ -1,9 +1,9 @@
-﻿from flask import Flask, request, jsonify
-from threading import Thread
+from flask import Flask, request, jsonify
 import asyncio
-import discord_bot  # Importar las funciones desde discord_bot.py
-import aiohttp
+from threading import Thread
+import discord_bot  # Asegúrate de que este módulo contiene tus funciones de Discord, como send_to_discord
 
+# Crear la aplicación Flask
 app = Flask(__name__)
 
 # Webhook de GitHub
@@ -31,33 +31,23 @@ def webhook():
 
     return jsonify({"status": "success"}), 200
 
-# Función para hacer ping a la aplicación Flask
-async def ping_self():
-    url = "http://127.0.0.1:8080"
-    while True:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    print(f"Ping exitoso: {response.status}")
-        except Exception as e:
-            print(f"Error al hacer ping: {e}")
-        await asyncio.sleep(300)  # Cada 5 minutos
-
 # Función para iniciar Flask en un hilo separado
 def start_flask():
     app.run(host="0.0.0.0", port=8080)
 
+# Función para iniciar el bot de Discord
+def start_discord_bot():
+    asyncio.run(discord_bot.start_discord_bot())
+
 # Función principal para iniciar todo
 def main():
-    # Iniciar Flask en un hilo
+    # Iniciar Flask en un hilo separado
     flask_thread = Thread(target=start_flask)
     flask_thread.start()
 
-    # Iniciar ping
-    asyncio.run(ping_self())
-
-    # Iniciar el bot de Discord
-    asyncio.run(discord_bot.start_discord_bot())
+    # Iniciar el bot de Discord en un hilo separado
+    discord_thread = Thread(target=start_discord_bot)
+    discord_thread.start()
 
 if __name__ == "__main__":
     main()
