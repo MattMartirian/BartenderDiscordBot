@@ -7,10 +7,6 @@
       "RelativeMoniker": "D:0:0:{AC97869F-D523-4886-B03C-D20926E75AA3}|BartenderDiscordBot\\BartenderDiscordBot.pyproj|solutionrelative:BartenderDiscordBot\\BartenderDiscordBot.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AC97869F-D523-4886-B03C-D20926E75AA3}|BartenderDiscordBot\\BartenderDiscordBot.pyproj|D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\discord_bot.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{AC97869F-D523-4886-B03C-D20926E75AA3}|BartenderDiscordBot\\BartenderDiscordBot.pyproj|solutionrelative:BartenderDiscordBot\\discord_bot.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{AC97869F-D523-4886-B03C-D20926E75AA3}|BartenderDiscordBot\\BartenderDiscordBot.pyproj|D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\.env||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{AC97869F-D523-4886-B03C-D20926E75AA3}|BartenderDiscordBot\\BartenderDiscordBot.pyproj|solutionrelative:BartenderDiscordBot\\.env||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
@@ -22,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -39,19 +35,6 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "discord_bot.py",
-              "DocumentMoniker": "D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\discord_bot.py",
-              "RelativeDocumentMoniker": "BartenderDiscordBot\\discord_bot.py",
-              "ToolTip": "D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\discord_bot.py",
-              "RelativeToolTip": "BartenderDiscordBot\\discord_bot.py",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAIwCcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2024-12-02T01:35:07.252Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": ".env",
               "DocumentMoniker": "D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\.env",
               "RelativeDocumentMoniker": "BartenderDiscordBot\\.env",
@@ -70,7 +53,7 @@
               "RelativeDocumentMoniker": "BartenderDiscordBot\\BartenderDiscordBot.py",
               "ToolTip": "D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\BartenderDiscordBot.py",
               "RelativeToolTip": "BartenderDiscordBot\\BartenderDiscordBot.py",
-              "ViewState": "AgIAACIAAAAAAAAAAAAIwDkAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAwwGYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2024-12-02T01:11:26.5Z",
               "EditorCaption": ""
