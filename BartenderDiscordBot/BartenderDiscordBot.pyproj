@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BartenderDiscordBot.py" />
+    <Compile Include="discord_bot.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".env" />
