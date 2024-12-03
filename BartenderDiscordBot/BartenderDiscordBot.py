@@ -18,8 +18,6 @@ DISCORD_CHANNEL_ID = 1312695472359735328  # Reemplaza con el ID de tu canal
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")  # Usar variable de entorno para el token
 
 # Indicadores de estado
-bot_ready = False
-flask_ready = Event()  # Señalar que Flask está listo
 pending_webhooks = []  # Lista para almacenar webhooks en espera
 
 
@@ -33,9 +31,7 @@ def webhook():
     # Agregar el webhook a la lista pendiente
     pending_webhooks.append(data)
 
-    # Si el bot ya está listo, procesar el webhook inmediatamente
-    if bot_ready:
-        asyncio.run_coroutine_threadsafe(process_webhook(data), bot.loop)
+    asyncio.run_coroutine_threadsafe(process_webhook(data), bot.loop)
     
     # Devolver confirmación inmediatamente
     return jsonify({"status": "received"}), 200
@@ -77,8 +73,6 @@ async def on_ready():
     """
     Evento que se dispara cuando el bot está listo.
     """
-    global bot_ready
-    bot_ready = True
     print(f"Bot conectado como {bot.user}")
 
     # Enviar mensaje inicial al canal de Discord
@@ -97,7 +91,6 @@ def run_flask():
     """
     Inicia Flask en un hilo separado.
     """
-    flask_ready.set()  # Señalar que Flask está listo
     app.run(host="0.0.0.0", port=8080)
 
 
@@ -109,9 +102,6 @@ async def main():
     # Iniciar Flask en un hilo separado
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
-
-    # Esperar hasta que Flask esté listo
-    flask_ready.wait()
 
     # Iniciar el bot
     await bot.start(DISCORD_TOKEN)
