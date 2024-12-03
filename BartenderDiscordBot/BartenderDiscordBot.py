@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import asyncio
 from threading import Thread, Event
 import os
+import json
 
 # Configuración del bot
 intents = discord.Intents.default()
@@ -30,21 +31,21 @@ def webhook():
     """
     data = request.json
 
-    # Esperar a que el bot esté listo y Flask se haya iniciado
-    flask_ready.wait()
-
     # Agregar el webhook a la lista pendiente
     pending_webhooks.append(data)
-
+    
+    # Esperar a que el bot esté listo y Flask se haya iniciado
+    flask_ready.wait()
+    
     return jsonify({"status": "received"}), 200
 
 
-async def process_webhook(data):
+def process_webhook(data):
     """
     Procesa un webhook de GitHub y envía el mensaje al canal de Discord.
     """
     repo_name = data['repository']['name']
-    action_type = data.get('action', 'Push')
+    action_type = data['action'] if 'action' in data else 'Push'
     branch = data['ref'].split('/')[-1]
 
     for commit in data['commits']:
@@ -54,41 +55,38 @@ async def process_webhook(data):
         description = "\n".join(commit['message'].split("\n")[1:]) if len(commit['message'].split("\n")) > 1 else "*No se ha brindado una descripción*"
         commit_url = commit['url']
 
-        await send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url)
+        asyncio.run_coroutine_threadsafe(
+            send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url),
+            bot.loop
+        )
 
 
+# Enviar mensaje a Discord
 async def send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url):
-    """
-    Enviar mensaje al canal de Discord.
-    """
     channel = bot.get_channel(DISCORD_CHANNEL_ID)
     if channel:
         await channel.send(
-            f"🚀 **Acción realizada en el repositorio `{repo_name}`**\n\n"
-            f"**Tipo de acción:** `{action_type}`\n"
-            f"**Branch afectada:** `{branch}`\n"
-            f"**Commit Hash:** `{commit_url.split('/')[-1]}`\n"
-            f"**Autor:** `{author}`\n"
-            f"**Fecha:** `{timestamp}`\n\n"
+            f"🚀 **Acción realizada en el repositorio {repo_name}**\n\n"
+            f"**Tipo de acción:** {action_type}\n"
+            f"**Branch afectada:** {branch}\n"
+            f"**Commit Hash:** {commit_url.split('/')[-1]}\n"
+            f"**Autor:** {author}\n"
+            f"**Fecha:** {timestamp}\n\n"
             f"🔹 **Título del commit:** {title}\n"
             f"🔹 **Descripción:** {description}\n\n"
             f"🔗 **Enlace al commit:** [Ver commit en GitHub]({commit_url})"
         )
 
 
+# Iniciar Flask en un hilo separado
 def run_flask():
-    """
-    Inicia el servidor Flask y señala que está listo.
-    """
-    flask_ready.set()  # Indicar que Flask está listo
     app.run(host="0.0.0.0", port=8080)
+    flask_ready.set()  # Señalar que Flask ha terminado de iniciar
 
 
+# Evento de inicio del bot
 @bot.event
 async def on_ready():
-    """
-    Evento que se ejecuta cuando el bot está listo.
-    """
     global bot_ready
     bot_ready = True
     print(f"Bot conectado como {bot.user}")
@@ -96,7 +94,7 @@ async def on_ready():
     # Enviar mensaje de inicio al canal de Discord
     channel = bot.get_channel(DISCORD_CHANNEL_ID)
     if channel:
-        await channel.send(f"¡El bot {bot.user.name} se ha iniciado exitosamente!")
+        await channel.send(f"¡El bot {bot.user.name} se ha iniciado exitosamente! Tengo {len(pending_webhooks)} webhook(s) pendiente(s).")
 
     # Procesar webhooks pendientes después del mensaje de inicio
     while pending_webhooks:
@@ -104,14 +102,14 @@ async def on_ready():
         await process_webhook(webhook_data)
 
 
+# Función principal
 async def main():
-    """
-    Función principal para iniciar el bot y el servidor Flask.
-    """
+    # Iniciar Flask en un hilo separado
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
-    await bot.start(DISCORD_TOKEN)
 
+    # Iniciar el bot
+    await bot.start(DISCORD_TOKEN)
 
 # Ejecutar la función principal
 asyncio.run(main())
