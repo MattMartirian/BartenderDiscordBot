@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify
 import asyncio
 from threading import Thread, Event
 import os
-import json
 
 # Configuración del bot
 intents = discord.Intents.default()
@@ -16,12 +15,12 @@ app = Flask(__name__)
 
 # Canal de Discord donde enviar los mensajes
 DISCORD_CHANNEL_ID = 1312695472359735328  # Reemplaza con el ID de tu canal
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")  # Utilizar variable de entorno para el token
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")  # Usar variable de entorno para el token
 
 # Indicadores de estado
 bot_ready = False
-flask_ready = Event()  # Evento para señalar que Flask está listo
-pending_webhooks = []  # Lista temporal para almacenar webhooks en espera
+flask_ready = Event()  # Señalar que Flask está listo
+pending_webhooks = []  # Lista para almacenar webhooks en espera
 
 
 @app.route('/webhook', methods=['POST'])
@@ -34,82 +33,85 @@ def webhook():
     # Agregar el webhook a la lista pendiente
     pending_webhooks.append(data)
     
-    # Esperar a que el bot esté listo y Flask se haya iniciado
-    flask_ready.wait()
-    
+    # Devolver confirmación inmediatamente
     return jsonify({"status": "received"}), 200
 
 
-def process_webhook(data):
+async def process_webhook(webhook_data):
     """
-    Procesa un webhook de GitHub y envía el mensaje al canal de Discord.
+    Procesa un webhook de GitHub y envía un mensaje al canal de Discord.
     """
-    repo_name = data['repository']['name']
-    action_type = data['action'] if 'action' in data else 'Push'
-    branch = data['ref'].split('/')[-1]
+    repo_name = webhook_data['repository']['name']
+    action_type = webhook_data.get('action', 'Push')
+    branch = webhook_data['ref'].split('/')[-1]
 
-    for commit in data['commits']:
+    for commit in webhook_data.get('commits', []):
         author = commit['author']['name']
         timestamp = commit['timestamp']
         title = commit['message'].split("\n")[0]
         description = "\n".join(commit['message'].split("\n")[1:]) if len(commit['message'].split("\n")) > 1 else "*No se ha brindado una descripción*"
         commit_url = commit['url']
 
-        asyncio.run_coroutine_threadsafe(
-            send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url),
-            bot.loop
-        )
+        # Enviar el mensaje al canal de Discord
+        channel = bot.get_channel(DISCORD_CHANNEL_ID)
+        if channel:
+            await channel.send(
+                f"🚀 **Acción en {repo_name}**\n"
+                f"**Tipo de acción:** {action_type}\n"
+                f"**Branch:** {branch}\n"
+                f"**Autor:** {author}\n"
+                f"**Fecha:** {timestamp}\n"
+                f"**Título:** {title}\n"
+                f"**Descripción:** {description}\n"
+                f"🔗 [Commit Link]({commit_url})"
+            )
 
 
-# Enviar mensaje a Discord
-async def send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url):
-    channel = bot.get_channel(DISCORD_CHANNEL_ID)
-    if channel:
-        await channel.send(
-            f"🚀 **Acción realizada en el repositorio {repo_name}**\n\n"
-            f"**Tipo de acción:** {action_type}\n"
-            f"**Branch afectada:** {branch}\n"
-            f"**Commit Hash:** {commit_url.split('/')[-1]}\n"
-            f"**Autor:** {author}\n"
-            f"**Fecha:** {timestamp}\n\n"
-            f"🔹 **Título del commit:** {title}\n"
-            f"🔹 **Descripción:** {description}\n\n"
-            f"🔗 **Enlace al commit:** [Ver commit en GitHub]({commit_url})"
-        )
-
-
-# Iniciar Flask en un hilo separado
-def run_flask():
-    app.run(host="0.0.0.0", port=8080)
-    flask_ready.set()  # Señalar que Flask ha terminado de iniciar
-
-
-# Evento de inicio del bot
 @bot.event
 async def on_ready():
+    """
+    Evento que se dispara cuando el bot está listo.
+    """
     global bot_ready
     bot_ready = True
     print(f"Bot conectado como {bot.user}")
 
-    # Enviar mensaje de inicio al canal de Discord
+    # Enviar mensaje inicial al canal de Discord
     channel = bot.get_channel(DISCORD_CHANNEL_ID)
     if channel:
         await channel.send(f"¡El bot {bot.user.name} se ha iniciado exitosamente! Tengo {len(pending_webhooks)} webhook(s) pendiente(s).")
 
-    # Procesar webhooks pendientes después del mensaje de inicio
+    # Procesar los webhooks pendientes
     while pending_webhooks:
         webhook_data = pending_webhooks.pop(0)
         await process_webhook(webhook_data)
 
 
+# Iniciar Flask en un hilo separado
+def run_flask():
+    """
+    Inicia Flask en un hilo separado.
+    """
+    flask_ready.set()  # Señalar que Flask está listo
+    app.run(host="0.0.0.0", port=8080)
+
+
 # Función principal
 async def main():
+    """
+    Función principal para iniciar Flask y el bot.
+    """
     # Iniciar Flask en un hilo separado
-    flask_thread = Thread(target=run_flask)
+    flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
+
+    # Esperar hasta que Flask esté listo
+    flask_ready.wait()
 
     # Iniciar el bot
     await bot.start(DISCORD_TOKEN)
 
+
 # Ejecutar la función principal
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

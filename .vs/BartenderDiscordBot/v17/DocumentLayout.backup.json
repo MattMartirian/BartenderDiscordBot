@@ -18,15 +18,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:2:0:{e8b06f52-6d01-11d2-aa7d-00c04f990343}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
               "$type": "Bookmark",
@@ -52,7 +48,7 @@
               "RelativeDocumentMoniker": "BartenderDiscordBot\\BartenderDiscordBot.py",
               "ToolTip": "D:\\Code\\Proyectos\\BartenderDiscordBot\\BartenderDiscordBot\\BartenderDiscordBot.py",
               "RelativeToolTip": "BartenderDiscordBot\\BartenderDiscordBot.py",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2024-12-02T01:11:26.5Z",
               "EditorCaption": ""
