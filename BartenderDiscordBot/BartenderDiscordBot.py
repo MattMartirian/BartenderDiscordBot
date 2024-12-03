@@ -90,9 +90,6 @@ async def main():
     # Iniciar Flask en un hilo separado
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
-
-    # Esperar hasta que Flask esté listo
-    flask_ready.wait()
     
     # Iniciar el bot
     await bot.start(DISCORD_TOKEN)
