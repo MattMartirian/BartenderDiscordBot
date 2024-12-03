@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import asyncio
 import aiohttp
 from threading import Thread
+import os
 
 # Configuración del bot
 intents = discord.Intents.default()
