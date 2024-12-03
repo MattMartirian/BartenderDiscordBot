@@ -30,9 +30,7 @@ def webhook():
     # Agregar el webhook a la lista pendiente
     pending_webhooks.append(data)
 
-    # Si el bot ya está listo, procesar el webhook inmediatamente
-    if bot_ready:
-        asyncio.run_coroutine_threadsafe(process_webhook(data), bot.loop)
+    asyncio.run_coroutine_threadsafe(process_webhook(data), bot.loop)
     
     return jsonify({"status": "success"}), 200
 
