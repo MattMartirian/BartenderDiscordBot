@@ -2,9 +2,8 @@ import discord
 from discord.ext import commands
 from flask import Flask, request, jsonify
 import asyncio
-from threading import Thread
+from threading import Thread, Event
 import os
-import json
 
 # Configuración del bot
 intents = discord.Intents.default()
@@ -18,36 +17,34 @@ app = Flask(__name__)
 DISCORD_CHANNEL_ID = 1312695472359735328  # Reemplaza con el ID de tu canal
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")  # Utilizar variable de entorno para el token
 
-# Archivo temporal para almacenar webhooks pendientes
-WEBHOOK_STORAGE = "pending_webhooks.json"
-
-# Indicador de si el bot está listo
+# Indicadores de estado
 bot_ready = False
+flask_ready = Event()  # Evento para señalar que Flask está listo
+pending_webhooks = []  # Lista temporal para almacenar webhooks en espera
 
-# Ruta para manejar webhooks de GitHub
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    global bot_ready
+    """
+    Endpoint para manejar los webhooks de GitHub.
+    """
     data = request.json
 
-    if bot_ready:
-        # Procesar inmediatamente si el bot está listo
-        process_webhook(data)
-    else:
-        # Almacenar en archivo para procesarlo más tarde
-        with open(WEBHOOK_STORAGE, "a") as file:
-            json.dump(data, file)
-            file.write("\n")
+    # Esperar a que el bot esté listo y Flask se haya iniciado
+    flask_ready.wait()
+
+    # Agregar el webhook a la lista pendiente
+    pending_webhooks.append(data)
 
     return jsonify({"status": "received"}), 200
 
 
-def process_webhook(data):
+async def process_webhook(data):
     """
     Procesa un webhook de GitHub y envía el mensaje al canal de Discord.
     """
     repo_name = data['repository']['name']
-    action_type = data['action'] if 'action' in data else 'Push'
+    action_type = data.get('action', 'Push')
     branch = data['ref'].split('/')[-1]
 
     for commit in data['commits']:
@@ -57,14 +54,13 @@ def process_webhook(data):
         description = "\n".join(commit['message'].split("\n")[1:]) if len(commit['message'].split("\n")) > 1 else "*No se ha brindado una descripción*"
         commit_url = commit['url']
 
-        asyncio.run_coroutine_threadsafe(
-            send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url),
-            bot.loop
-        )
+        await send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url)
 
 
-# Enviar mensaje a Discord
 async def send_to_discord(repo_name, action_type, branch, author, timestamp, title, description, commit_url):
+    """
+    Enviar mensaje al canal de Discord.
+    """
     channel = bot.get_channel(DISCORD_CHANNEL_ID)
     if channel:
         await channel.send(
@@ -80,14 +76,19 @@ async def send_to_discord(repo_name, action_type, branch, author, timestamp, tit
         )
 
 
-# Iniciar Flask en un hilo separado
 def run_flask():
+    """
+    Inicia el servidor Flask y señala que está listo.
+    """
+    flask_ready.set()  # Indicar que Flask está listo
     app.run(host="0.0.0.0", port=8080)
 
 
-# Evento de inicio del bot
 @bot.event
 async def on_ready():
+    """
+    Evento que se ejecuta cuando el bot está listo.
+    """
     global bot_ready
     bot_ready = True
     print(f"Bot conectado como {bot.user}")
@@ -97,25 +98,20 @@ async def on_ready():
     if channel:
         await channel.send(f"¡El bot {bot.user.name} se ha iniciado exitosamente!")
 
-    # Procesar webhooks pendientes
-    if os.path.exists(WEBHOOK_STORAGE):
-        with open(WEBHOOK_STORAGE, "r") as file:
-            for line in file:
-                data = json.loads(line.strip())
-                process_webhook(data)
-
-        # Limpiar el archivo después de procesar
-        os.remove(WEBHOOK_STORAGE)
+    # Procesar webhooks pendientes después del mensaje de inicio
+    while pending_webhooks:
+        webhook_data = pending_webhooks.pop(0)
+        await process_webhook(webhook_data)
 
 
-# Función principal
 async def main():
-    # Iniciar Flask en un hilo separado
+    """
+    Función principal para iniciar el bot y el servidor Flask.
+    """
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
-
-    # Iniciar el bot
     await bot.start(DISCORD_TOKEN)
+
 
 # Ejecutar la función principal
 asyncio.run(main())
